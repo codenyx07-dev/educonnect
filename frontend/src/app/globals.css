@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-primary-500: #4f46e5;
+  --color-primary-600: #4338ca;
+  --color-secondary-500: #9333ea;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #f8fafc;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), sans-serif;
+}
+
+/* Premium gradient utility */
+.bg-gradient-premium {
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-secondary-500));
+}
+
+.transition-colors {
+  transition-property: background-color, border-color, color, fill, stroke, text-decoration-color;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .bg-slate-50 {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-white {
+  background-color: #1e293b !important;
+}

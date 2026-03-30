@@ -1,0 +1,30 @@
+{
+  "dashboard": {
+    "welcome": "Welcome back",
+    "journey": "Let's continue your learning journey.",
+    "streak": "Day Streak!",
+    "progress": "Learning Progress",
+    "this_week": "This Week",
+    "next_lesson": "Next Lesson",
+    "start_now": "Start Now",
+    "have_doubt": "Have a Doubt?",
+    "ask_ai": "Ask the AI or connect with your Mentor instantly.",
+    "btn_ask_ai": "Ask AI Assistant",
+    "goals": "Daily Goals"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "assignments": "Assignments",
+    "ai_assistant": "AI Assistant",
+    "ask_mentor": "Ask a Mentor",
+    "badges": "Badges",
+    "logout": "Logout"
+  },
+  "assignments": {
+    "title": "My Assignments",
+    "subtitle": "Complete your tasks to maintain your streak.",
+    "take": "Take Assignment",
+    "completed": "Completed",
+    "due": "Due"
+  }
+}
