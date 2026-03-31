@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, UserCheck, Star, Activity, Globe, ShieldAlert, Download, LogOut } from "lucide-react";
+import { Users, UserCheck, Star, Activity, Globe, ShieldAlert, Download, LogOut, Map, Clock } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuthStore, API_URL } from "@/store/authStore";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -20,9 +20,15 @@ function NgoDashboardContent() {
   const { user, getAuthHeader, logout } = useAuthStore();
   const [stats, setStats] = useState<any>(null);
   const [mentors, setMentors] = useState<any[]>([]);
+  const [localMatches, setLocalMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('recentNgoMatches') || '[]');
+      setLocalMatches(saved);
+    } catch (e) {}
+
     // Fetch stats and mentor list
     fetch(`${API_URL}/dashboard/ngo`, {
       headers: { ...getAuthHeader(), 'Content-Type': 'application/json' }
@@ -199,6 +205,98 @@ function NgoDashboardContent() {
                </div>
             </div>
           </div>
+        </div>
+
+        {/* Local Storage Matches & Regional Penetration Map */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-10">
+           {/* Regional Map */}
+           <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-sm border border-slate-100 dark:border-slate-700">
+             <div className="flex justify-between items-center mb-10">
+               <div>
+                 <h3 className="text-2xl font-black text-slate-800 dark:text-white flex items-center">
+                   <Map className="w-6 h-6 mr-3 text-indigo-500" />
+                   Regional Penetration
+                 </h3>
+                 <p className="text-slate-400 text-sm font-medium mt-1">Student distribution across geographical zones</p>
+               </div>
+             </div>
+             
+             <div className="relative w-full h-80 bg-slate-50 dark:bg-slate-900 rounded-[2rem] p-6 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-slate-800">
+                <div className="absolute inset-0 opacity-20 dark:opacity-40">
+                   <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                     <defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" fill="currentColor"/></pattern></defs>
+                     <rect width="100%" height="100%" fill="url(#dots)" className="text-slate-300 dark:text-slate-700"/>
+                   </svg>
+                </div>
+
+                <div className="relative z-10 w-full max-w-lg h-full grid grid-cols-3 grid-rows-3 gap-4">
+                   {/* North */}
+                   <div className="col-start-2 row-start-1 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white dark:border-slate-600 flex flex-col items-center justify-center transform hover:scale-105 transition-transform cursor-pointer group">
+                      <div className="text-rose-500 font-black text-xl mb-1">34%</div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">North Region</div>
+                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full mt-3 overflow-hidden">
+                         <div className="h-full bg-rose-500 w-[34%]"></div>
+                      </div>
+                   </div>
+                   {/* West */}
+                   <div className="col-start-1 row-start-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white dark:border-slate-600 flex flex-col items-center justify-center transform hover:scale-105 transition-transform cursor-pointer">
+                      <div className="text-blue-500 font-black text-xl mb-1">18%</div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">West Region</div>
+                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full mt-3 overflow-hidden">
+                         <div className="h-full bg-blue-500 w-[18%]"></div>
+                      </div>
+                   </div>
+                   {/* Central */}
+                   <div className="col-start-2 row-start-2 bg-emerald-500 text-white rounded-[2rem] shadow-2xl shadow-emerald-500/30 flex flex-col items-center justify-center transform scale-110 z-20 hover:scale-125 transition-transform cursor-pointer relative overflow-hidden">
+                      <div className="absolute inset-0 bg-white opacity-20 rounded-[2rem] animate-ping"></div>
+                      <div className="font-black text-2xl mb-1">45%</div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-100 text-center">Central Hub</div>
+                   </div>
+                   {/* East */}
+                   <div className="col-start-3 row-start-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white dark:border-slate-600 flex flex-col items-center justify-center transform hover:scale-105 transition-transform cursor-pointer">
+                      <div className="text-amber-500 font-black text-xl mb-1">12%</div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">East Region</div>
+                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full mt-3 overflow-hidden">
+                         <div className="h-full bg-amber-500 w-[12%]"></div>
+                      </div>
+                   </div>
+                   {/* South */}
+                   <div className="col-start-2 row-start-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white dark:border-slate-600 flex flex-col items-center justify-center transform hover:scale-105 transition-transform cursor-pointer">
+                      <div className="text-indigo-500 font-black text-xl mb-1">28%</div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">South Region</div>
+                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full mt-3 overflow-hidden">
+                         <div className="h-full bg-indigo-500 w-[28%]"></div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+           </div>
+
+           {/* Live Local Matches */}
+           <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-700 shadow-sm">
+             <h3 className="text-[11px] uppercase font-black text-slate-400 tracking-widest mb-8 flex items-center">
+               <Clock className="w-4 h-4 mr-2 text-emerald-500" /> Recent Live Matches
+             </h3>
+             <div className="space-y-4">
+                {localMatches.length > 0 ? localMatches.map((match, i) => (
+                  <div key={i} className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/50 hover:scale-105 transition-transform cursor-pointer">
+                     <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center font-bold overflow-hidden shadow-inner border border-white dark:border-slate-600">
+                           <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${match.name}`} alt="Avatar" />
+                        </div>
+                        <div>
+                           <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{match.name}</p>
+                           <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{match.primarySubject || 'General'} • {match.matchedScore}</p>
+                        </div>
+                     </div>
+                  </div>
+                )) : (
+                  <div className="text-center p-8 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
+                    <p className="text-slate-400 text-sm font-bold">No live matches in this session.</p>
+                  </div>
+                )}
+             </div>
+           </div>
         </div>
       </main>
     </div>

@@ -48,18 +48,30 @@ function AskMentorContent() {
       
       // Simulate algorithm delay
       setTimeout(() => {
+        let finalMentor;
         if (data.success) {
-          setMatchedMentor(data.mentor);
+          finalMentor = data.mentor;
         } else {
           // Fallback if no matching mentor found (though seed has them)
-          setMatchedMentor({
+          finalMentor = {
             name: "Rahul Sharma",
             matchedScore: "95%",
             rating: "4.9",
-            reason: "Expert in Mathematics with over 500 successful sessions."
-          });
+            reason: "Expert in Mathematics with over 500 successful sessions.",
+            primarySubject: formData.subject,
+            language: formData.language
+          };
         }
+        setMatchedMentor(finalMentor);
         setMatching(false);
+
+        // Store for NGO dashboard demo
+        try {
+           const existing = JSON.parse(localStorage.getItem('recentNgoMatches') || '[]');
+           localStorage.setItem('recentNgoMatches', JSON.stringify([finalMentor, ...existing].slice(0, 10)));
+        } catch (e) {
+           console.error("Local storage error:", e);
+        }
       }, 1500);
     } catch (error) {
       console.error("Matching Error:", error);
