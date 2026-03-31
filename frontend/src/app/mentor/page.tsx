@@ -178,7 +178,16 @@ function MentorDashboardContent() {
                      <Search className="w-4 h-4 mr-2 text-primary-500" /> Quick Search
                    </h3>
                    <div className="relative">
-                     <input type="text" placeholder="Find a student..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium text-slate-100" />
+                     <input 
+                       type="text" 
+                       placeholder="Find a student..." 
+                       onKeyDown={(e) => {
+                         if (e.key === 'Enter') {
+                           window.location.href = `/mentor/students?search=${(e.target as HTMLInputElement).value}`;
+                         }
+                       }}
+                       className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500 transition-all text-slate-800 dark:text-white shadow-inner" 
+                     />
                      <Search className="absolute right-4 top-4 w-5 h-5 text-slate-400" />
                    </div>
                 </div>

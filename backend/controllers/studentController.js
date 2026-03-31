@@ -65,7 +65,7 @@ exports.submitAssignment = async (req, res) => {
     let correctCount = 0;
     if (assignment.questions && assignment.questions.length > 0) {
       assignment.questions.forEach((q, idx) => {
-        if (answers && answers[idx] === q.correctAnswer) {
+        if (answers && answers[idx] !== undefined && Number(answers[idx]) === q.correctAnswer) {
           correctCount++;
         }
       });
@@ -215,3 +215,13 @@ function formatDueDate(date) {
   if (diffDays <= 7) return `In ${diffDays} days`;
   return `${due.toLocaleDateString()}`;
 }
+
+exports.postFeedback = async (req, res) => {
+  res.json({ success: true, message: 'Feedback recorded.' });
+};
+
+exports.endSession = async (req, res) => {
+  const User = require('../models/User');
+  await User.findByIdAndUpdate(req.user._id, { assignedMentorId: null });
+  res.json({ success: true, message: 'Session ended.' });
+};

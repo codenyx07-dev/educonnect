@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Search, Phone, Video, Info, MoreVertical, CheckCheck, Loader2, ArrowLeft, MessageSquare, Plus } from "lucide-react";
+import { Send, Search, Phone, Video, Info, MoreVertical, CheckCheck, Loader2, ArrowLeft, MessageSquare, Plus, Star, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuthStore, API_URL } from "@/store/authStore";
@@ -27,14 +28,23 @@ function StudentChatContent() {
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [mentor, setMentor] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // For students, we just connect to their assigned mentor's room
-    // For demo, we assume they have one assigned mentor from the seed
-    const roomId = `room_${user?._id}_mentor_65f1a2b3c4d5e6f7a8b9c0d1`; // Mocked mentor ID for connectivity
+    // If no assigned mentor exists in the DB, we mock one for the demo flow
+    const mentorId = user?.assignedMentorId || "fallback_mentor_123";
+    const roomId = `room_${user?._id || 'guest'}_mentor_${mentorId}`;
+    
     setActiveRoom(roomId);
-    setMentor({ name: "Dr. Ananya Sharma", subject: "Mathematics Expert" });
+    setMentor({ 
+      name: user?.assignedMentorId ? "Your Assigned Mentor" : "Rahul Sharma (Matched)", 
+      subject: "Mathematics Expert" 
+    });
     setLoading(false);
 
     const newSocket = io("http://localhost:5000");
@@ -44,7 +54,7 @@ function StudentChatContent() {
        setMessages(prev => [...prev, message]);
     });
 
-    newSocket.emit("joinRoom", { roomId, userName: user?.name });
+    newSocket.emit("joinRoom", { roomId, userName: user?.name || "Student" });
 
     return () => {
       newSocket.close();
@@ -136,7 +146,13 @@ function StudentChatContent() {
               <div className="flex items-center space-x-3">
                  <button className="p-3 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl transition-all"><Phone className="w-5 h-5" /></button>
                  <button className="p-3 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl transition-all"><Video className="w-5 h-5" /></button>
-                 <button className="p-3 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl transition-all"><Info className="w-5 h-5" /></button>
+                 <button 
+                    onClick={() => setShowFeedbackModal(true)}
+                    className="p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all flex items-center shadow-sm border border-red-100 dark:border-red-900/50 hover:shadow-md ml-2 bg-red-50/50 dark:bg-slate-800"
+                 >
+                    <span className="text-sm font-bold mr-2 ml-1">End Session</span>
+                    <X className="w-4 h-4" />
+                 </button>
               </div>
             </header>
 
@@ -187,6 +203,85 @@ function StudentChatContent() {
           </>
         )}
       </main>
+
+      {/* Feedback Modal */}
+      <AnimatePresence>
+        {showFeedbackModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 flex flex-col items-center"
+            >
+              {feedbackSubmitted ? (
+                <div className="flex flex-col items-center justify-center py-6 animate-in fade-in zoom-in duration-300">
+                  <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/30">
+                    <CheckCheck className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Thank You!</h3>
+                  <p className="text-slate-500 dark:text-slate-400 font-medium text-center">Your feedback helps us improve the mentor experience.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-6 text-emerald-500">
+                    <CheckCheck className="w-8 h-8" />
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-800 dark:text-white text-center mb-2">Session Completed!</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-center mb-8">How was your interaction with {mentor?.name}?</p>
+                  
+                  <div className="flex space-x-2 mb-8">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onMouseEnter={() => setHoveredRating(star)}
+                        onMouseLeave={() => setHoveredRating(0)}
+                        onClick={() => setRating(star)}
+                        className="p-1 transition-transform hover:scale-110 focus:outline-none"
+                      >
+                        <Star 
+                          className={`w-10 h-10 transition-colors ${
+                            (hoveredRating || rating) >= star 
+                              ? 'fill-yellow-400 text-yellow-400' 
+                              : 'fill-slate-100 text-slate-200 dark:fill-slate-700 dark:text-slate-600'
+                          }`} 
+                        />
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex space-x-4 w-full">
+                    <button 
+                      onClick={() => setShowFeedbackModal(false)}
+                      className="flex-1 py-3.5 rounded-2xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setFeedbackSubmitted(true);
+                        setTimeout(() => {
+                           setShowFeedbackModal(false);
+                           router.push('/student');
+                        }, 2000);
+                      }}
+                      disabled={rating === 0}
+                      className="flex-1 py-3.5 rounded-2xl font-black text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-primary-200 dark:shadow-primary-900/20"
+                    >
+                      Submit
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

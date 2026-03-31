@@ -23,6 +23,7 @@ function AskMentorContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const [matching, setMatching] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [matchedMentor, setMatchedMentor] = useState<any>(null);
   const [formData, setFormData] = useState({
     subject: "Mathematics",
@@ -217,11 +218,24 @@ function AskMentorContent() {
 
                   <div className="space-y-3">
                     <button 
-                      onClick={() => router.push('/student/chat')}
-                      className="w-full bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-black py-4 rounded-2xl flex items-center justify-center hover:bg-slate-700 dark:hover:bg-slate-100 transition-all shadow-md group"
+                      onClick={() => {
+                        setIsConnecting(true);
+                        setTimeout(() => router.push('/student/chat'), 800);
+                      }}
+                      disabled={isConnecting}
+                      className="w-full bg-slate-800 dark:bg-white dark:text-slate-900 text-white font-black py-4 rounded-2xl flex items-center justify-center hover:bg-slate-700 dark:hover:bg-slate-100 transition-all shadow-md group disabled:opacity-75"
                     >
-                      <MessageSquare className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                      Start Chat Session
+                      {isConnecting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                          Entering Chat...
+                        </>
+                      ) : (
+                        <>
+                          <MessageSquare className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
+                          Start Chat Session
+                        </>
+                      )}
                     </button>
                     <div className="flex items-center justify-center text-[10px] text-slate-400 font-bold uppercase tracking-widest py-2">
                        <CheckCircle2 className="w-3 h-3 mr-1.5 text-emerald-500" /> Secure • Live • Expert

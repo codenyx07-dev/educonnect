@@ -3,39 +3,50 @@ const Feedback = require('../models/Feedback');
 
 exports.matchMentor = async (req, res) => {
   try {
-    const { studentSubjects, studentLanguage } = req.body;
+    const { subjects, language } = req.body;
+    const studentId = req.user._id;
 
+    // Find all available mentors
     const mentors = await User.find({ role: 'mentor' });
 
     if (mentors.length === 0) {
       return res.status(404).json({ success: false, message: 'No mentors available at this time.' });
     }
 
-    // Score-based matching algorithm
-    const scoredMentors = await Promise.all(mentors.map(async (mentor) => {
-      let matchScore = 50; // base score
+    // Matching logic per request: Subject & Language priority
+    const scoredMentors = mentors.map(mentor => {
+      let score = 50; // base score
+      
+      // Subject overlap bonus
+      if (mentor.subjectsTaught && subjects) {
+        const overlap = mentor.subjectsTaught.filter(s => subjects.includes(s));
+        score += overlap.length * 20; // +20 points per subject match
+      }
 
-      // Get average rating from feedback
-      const feedbacks = await Feedback.find({ mentorId: mentor._id });
-      const avgRating = feedbacks.length > 0
-        ? feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length
-        : 4.0;
+      // Language match bonus
+      if (mentor.spokenLanguages && language) {
+        if (mentor.spokenLanguages.includes(language)) score += 30;
+      }
 
-      matchScore += avgRating * 10; // up to +50 points from rating
+      // Rating bonus
+      score += (mentor.avgRating || 4.2) * 2;
 
       return {
         _id: mentor._id,
         name: mentor.name,
         email: mentor.email,
-        matchedScore: `${Math.min(Math.round(matchScore), 99)}%`,
-        rating: avgRating.toFixed(1),
-        reason: `Matched based on availability and ${avgRating >= 4 ? 'excellent' : 'good'} teaching rating (${avgRating.toFixed(1)}⭐).`
+        matchedScore: `${Math.min(Math.round(score), 99)}%`,
+        rating: (mentor.avgRating || 4.2).toFixed(1),
+        reason: `Matched based on ${subjects?.length > 0 ? subjects[0] : 'Academic'} proficiency and language compatibility.`
       };
-    }));
+    });
 
-    // Sort by match score descending and pick best
+    // Sort and pick best
     scoredMentors.sort((a, b) => parseInt(b.matchedScore) - parseInt(a.matchedScore));
     const bestMentor = scoredMentors[0];
+
+    // Persist assignment
+    await User.findByIdAndUpdate(studentId, { assignedMentorId: bestMentor._id });
 
     res.json({ success: true, mentor: bestMentor });
   } catch (error) {
@@ -58,14 +69,16 @@ exports.getMentorStudents = async (req, res) => {
 
     const result = students.slice(0, 20).map(student => {
       const risk = riskMap[student._id.toString()];
+      const level = risk?.riskLevel === 'Critical' ? 'High' : 
+                   risk?.riskLevel === 'Moderate' ? 'Medium' : 'Low';
       return {
         id: student._id,
         name: student.name,
         subject: ['Math', 'Science', 'English'][Math.floor(Math.random() * 3)],
         score: risk ? `${100 - risk.score}%` : '75%',
-        risk: risk?.riskLevel || 'Safe',
-        riskColor: risk?.riskLevel === 'Critical' ? 'text-rose-600 bg-rose-100 dark:bg-rose-900/40' :
-                   risk?.riskLevel === 'Moderate' ? 'text-orange-600 bg-orange-100 dark:bg-orange-900/40' :
+        risk: level,
+        riskColor: level === 'High' ? 'text-rose-600 bg-rose-100 dark:bg-rose-900/40' :
+                   level === 'Medium' ? 'text-orange-600 bg-orange-100 dark:bg-orange-900/40' :
                    'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/40'
       };
     });

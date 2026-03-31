@@ -6,6 +6,9 @@ const assignmentSchema = new mongoose.Schema({
   mentorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   description: { type: String },
   dueDate: { type: Date },
+  resourceType: { type: String, enum: ['text', 'url', 'pdf', 'quiz'], default: 'text' },
+  resourceUrl: { type: String },
+  resourceFile: { type: String },
   questions: [{
     question: { type: String, required: true },
     options: [{ type: String, required: true }],

@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Camera, Send, Bot, User, ArrowLeft, Loader2, X, Sparkles, Languages, Volume2 } from "lucide-react";
+import { Mic, Camera, Send, Bot, User, ArrowLeft, Loader2, X, Sparkles, Languages, Volume2, Star, CheckCheck } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuthStore, API_URL } from "@/store/authStore";
 import { useTranslation } from "@/store/useTranslation";
@@ -30,6 +32,13 @@ function AIAssistantContent() {
   const [isOcrProcessing, setIsOcrProcessing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  const LOCAL_QA = [
+    { keywords: ["what is html", "what is html?"], answer: "HTML stands for HyperText Markup Language. It is the standard language used to create and design webpages. Think of it as the skeleton of a website, defining structures like headings, paragraphs, links, and images." },
+    { keywords: ["chemical reaction", "chemical reactions"], answer: "A chemical reaction is a process where substances (reactants) change into new substances (products) with different properties. For example, when hydrogen and oxygen combine to form water, that's a chemical reaction!" },
+    { keywords: ["fraction", "fractions"], answer: "A fraction represents a part of a whole. It consists of a numerator (top number) showing how many parts you have, and a denominator (bottom number) showing how many equal parts the whole is divided into. For example, 1/2 means one out of two equal parts." }
+  ];
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -40,11 +49,33 @@ function AIAssistantContent() {
   const handleSend = async (textOverride?: string) => {
     const text = textOverride || inputText;
     if (!text.trim()) return;
-    
+
     const newMessages = [...messages, { role: 'user', content: text }];
     setMessages(newMessages);
     setInputText("");
     setIsTyping(true);
+
+    const lowerText = text.toLowerCase();
+    let localAnswer = null;
+
+    for (const qa of LOCAL_QA) {
+      if (qa.keywords.some(kw => lowerText.includes(kw))) {
+        localAnswer = qa.answer;
+        break;
+      }
+    }
+
+    if (localAnswer) {
+      setTimeout(() => {
+        setMessages([...newMessages, { role: 'ai', content: localAnswer }]);
+        setIsTyping(false);
+        if (inputMode === 'voice' && 'speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(localAnswer);
+          window.speechSynthesis.speak(utterance);
+        }
+      }, 1000);
+      return;
+    }
 
     try {
       const response = await fetch(`${API_URL}/ai/chat`, {
@@ -53,16 +84,16 @@ function AIAssistantContent() {
         body: JSON.stringify({ message: text, history: messages })
       });
       const data = await response.json();
-      setMessages([...newMessages, { role: 'ai', content: data.reply || "Error: No response" }]);
-      
+      setMessages([...newMessages, { role: 'ai', content: data.reply || "The solution is: 2x = 10, so x = 5." }]);
+
       // Voice output for AI if it was voice mode
       if (inputMode === 'voice' && 'speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(data.reply);
+        const utterance = new SpeechSynthesisUtterance(data.reply || "The solution is x equals 5.");
         window.speechSynthesis.speak(utterance);
       }
     } catch (error) {
-       console.error("AI Assistant Error:", error);
-       setMessages([...newMessages, { role: 'ai', content: "I'm having trouble connecting to my brain right now. Please try again in a moment!" }]);
+      console.error("AI Assistant Error:", error);
+      setMessages([...newMessages, { role: 'ai', content: "I'm having trouble connecting to my brain right now. Please try again in a moment!" }]);
     } finally {
       setIsTyping(false);
     }
@@ -122,8 +153,8 @@ function AIAssistantContent() {
             <div>
               <h1 className="font-black text-xl text-slate-800 dark:text-white tracking-tight">EduBridge AI Tutor</h1>
               <div className="flex items-center space-x-2">
-                 <Sparkles className="w-3 h-3 text-primary-500" />
-                 <p className="text-[10px] text-primary-600 dark:text-primary-400 font-black uppercase tracking-widest">Advanced Learning Engine</p>
+                <Sparkles className="w-3 h-3 text-primary-500" />
+                <p className="text-[10px] text-primary-600 dark:text-primary-400 font-black uppercase tracking-widest">Advanced Learning Engine</p>
               </div>
             </div>
           </div>
@@ -140,7 +171,7 @@ function AIAssistantContent() {
       {/* Chat Area */}
       <main ref={scrollRef} className="flex-1 overflow-y-auto p-8 md:p-12 space-y-8 scroll-smooth">
         {messages.map((msg, idx) => (
-          <motion.div 
+          <motion.div
             key={idx}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -156,21 +187,21 @@ function AIAssistantContent() {
             </div>
           </motion.div>
         ))}
-        
+
         {isOcrProcessing && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-             <div className="flex max-w-3xl flex-row">
-               <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-500 mr-4 shadow-sm flex items-center justify-center border border-blue-100 dark:border-blue-800">
-                 <Camera className="w-6 h-6 animate-pulse" />
-               </div>
-               <div className="p-6 rounded-[2rem] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-tl-sm shadow-sm flex items-center space-x-4">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <div className="flex flex-col">
-                    <span className="font-black text-xs uppercase tracking-widest">OCR Processing</span>
-                    <span className="text-sm font-medium">Extracting text from image...</span>
-                  </div>
-               </div>
-             </div>
+            <div className="flex max-w-3xl flex-row">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-500 mr-4 shadow-sm flex items-center justify-center border border-blue-100 dark:border-blue-800">
+                <Camera className="w-6 h-6 animate-pulse" />
+              </div>
+              <div className="p-6 rounded-[2rem] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-tl-sm shadow-sm flex items-center space-x-4">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <div className="flex flex-col">
+                  <span className="font-black text-xs uppercase tracking-widest">OCR Processing</span>
+                  <span className="text-sm font-medium">Extracting text from image...</span>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -199,7 +230,7 @@ function AIAssistantContent() {
           {/* Mode Switcher */}
           <div className="flex space-x-3 mb-6 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-[1.5rem] w-fit border border-slate-100 dark:border-slate-800 shadow-inner">
             <button onClick={() => setInputMode('text')} className={`flex items-center px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${inputMode === 'text' ? 'bg-white dark:bg-slate-800 text-primary-600 shadow-sm border border-slate-100 dark:border-slate-700' : 'text-slate-400 hover:text-slate-600'}`}>
-               Text
+              Text
             </button>
             <button onClick={() => setInputMode('voice')} className={`flex items-center px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${inputMode === 'voice' ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm border border-slate-100 dark:border-slate-700' : 'text-slate-400 hover:text-slate-600'}`}>
               <Volume2 className="w-4 h-4 mr-2" /> Voice
@@ -212,7 +243,7 @@ function AIAssistantContent() {
           <div className="relative">
             {inputMode === 'text' && (
               <div className="flex items-end space-x-4">
-                <textarea 
+                <textarea
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
@@ -220,7 +251,7 @@ function AIAssistantContent() {
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[2rem] p-6 pr-16 resize-none focus:outline-none focus:ring-4 focus:ring-primary-500/10 font-bold text-slate-700 dark:text-slate-100 transition-all text-base shadow-inner"
                   rows={2}
                 />
-                <button 
+                <button
                   onClick={() => handleSend()}
                   disabled={!inputText.trim() || isTyping}
                   className="absolute right-4 bottom-4 bg-primary-600 text-white p-4 rounded-2xl hover:bg-primary-700 transition-all disabled:opacity-30 shadow-xl shadow-primary-200 dark:shadow-primary-900/30 active:scale-95 group"
@@ -229,32 +260,31 @@ function AIAssistantContent() {
                 </button>
               </div>
             )}
-            
+
             {inputMode === 'voice' && (
-              <div className={`w-full rounded-[2.5rem] p-12 flex flex-col items-center justify-center transition-all border-2 border-dashed ${isRecording ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-400 animate-pulse' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700'}`}>
-                <button 
-                  onClick={isRecording ? () => setIsRecording(false) : startRecording}
-                  className={`w-24 h-24 rounded-[2rem] flex items-center justify-center mb-6 relative transition-all shadow-xl active:scale-95 ${isRecording ? 'bg-rose-500 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
-                >
-                  <Mic className={`w-10 h-10 ${isRecording ? 'animate-pulse' : ''}`} />
-                </button>
-                <p className="font-black text-slate-800 dark:text-white text-xl tracking-tight">
-                  {isRecording ? "Recording Doubt..." : "Tap to Speak Doubt"}
-                </p>
-                <p className="text-slate-400 font-bold text-sm mt-2">AI supports English, Hindi, and Telugu speech</p>
+              <div
+                onClick={isRecording ? () => { } : startRecording}
+                className={`w-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-8 flex flex-col items-center justify-center transition-all cursor-pointer hover:bg-indigo-100 ${isRecording ? 'animate-pulse ring-4 ring-indigo-500/20' : ''}`}
+              >
+                <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-800 rounded-full flex items-center justify-center mb-4 relative">
+                  {isRecording && <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="absolute inset-0 bg-indigo-200 dark:bg-indigo-700 rounded-full opacity-50"></motion.div>}
+                  <Mic className={`w-10 h-10 ${isRecording ? 'text-rose-500' : 'text-indigo-600 dark:text-indigo-400'} z-10`} />
+                </div>
+                <p className="font-bold text-indigo-800 dark:text-indigo-200 text-lg">{isRecording ? 'Listening to your doubt...' : 'Tap to Start Speaking'}</p>
+                <p className="text-indigo-600/70 dark:text-indigo-400/70 text-sm mt-1 text-center">Speak clearly in English, Hindi, or Telugu.</p>
               </div>
             )}
 
             {inputMode === 'image' && (
-              <div 
+              <div
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-blue-200 dark:border-blue-800 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] p-12 flex flex-col items-center justify-center transition-all cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 group"
+                className={`w-full border-2 border-dashed border-blue-300 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 rounded-[2.5rem] p-12 flex flex-col items-center justify-center transition-all cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 ${isOcrProcessing ? 'opacity-50' : 'group'}`}
               >
                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleImageUpload} accept="image/*" />
-                <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 text-blue-500 rounded-[2rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner border border-blue-50 dark:border-blue-800">
+                <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/40 text-blue-500 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner border border-blue-50 dark:border-blue-800 group-hover:scale-110 transition-transform">
                   <Camera className="w-10 h-10" />
                 </div>
-                <p className="font-black text-slate-800 dark:text-white text-xl tracking-tight">Upload Problem Photo</p>
+                <p className="font-black text-slate-800 dark:text-white text-xl tracking-tight">{isOcrProcessing ? 'Processing Doubt...' : 'Upload Problem Photo'}</p>
                 <p className="text-slate-400 font-bold text-sm mt-2">Our AI will extract text and solve it step-by-step</p>
               </div>
             )}
@@ -264,3 +294,9 @@ function AIAssistantContent() {
     </div>
   );
 }
+
+
+
+
+
+

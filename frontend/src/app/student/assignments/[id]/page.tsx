@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Clock, CheckCircle, Loader2, Target, Trophy, X, ChevronRight, Calculator, BookOpen, ScrollText } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, Loader2, Target, Trophy, X, ChevronRight, Calculator, BookOpen, ScrollText, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -156,47 +156,92 @@ function TakeAssignmentContent() {
           </div>
        </header>
 
-       {/* Question Content */}
-       <main className="flex-1 flex flex-col items-center justify-center p-8 md:p-12">
-          <motion.div 
-            key={currentQuestion}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="w-full max-w-4xl"
-          >
-             <div className="flex items-center space-x-4 mb-8">
-                <div className="w-14 h-14 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner border-2 border-white dark:border-slate-800">
-                   {currentQuestion + 1}
-                </div>
-                <h3 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white leading-tight">{currentQ?.question}</h3>
-             </div>
+        {/* Resource Viewer / Question Content */}
+        <main className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 overflow-y-auto">
+           <motion.div 
+             key={currentQuestion}
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             className="w-full max-w-5xl bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-2xl border border-slate-100 dark:border-slate-700"
+           >
+              {assignment.resourceType !== 'quiz' ? (
+                <div className="space-y-8">
+                  <div className="flex items-center space-x-4 mb-6">
+                    <div className="p-4 bg-primary-50 dark:bg-primary-900/30 rounded-2xl">
+                      {assignment.resourceType === 'pdf' ? <ScrollText className="w-8 h-8 text-primary-600" /> : 
+                       assignment.resourceType === 'url' ? <Target className="w-8 h-8 text-primary-600" /> : 
+                       <BookOpen className="w-8 h-8 text-primary-600" />}
+                    </div>
+                    <h3 className="text-3xl font-black text-slate-800 dark:text-white">Learning Material</h3>
+                  </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-                {currentQ?.options?.map((option: string, idx: number) => (
-                   <button
-                     key={idx}
-                     onClick={() => selectOption(idx)}
-                     className={`p-8 rounded-[2.5rem] text-left text-lg font-bold transition-all relative group overflow-hidden border-2 ${
-                       answers[currentQuestion] === idx 
-                         ? 'bg-primary-600 border-primary-600 text-white shadow-xl shadow-primary-200 dark:shadow-primary-900/30' 
-                         : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-800 text-slate-700 dark:text-slate-200 hover:shadow-lg'
-                     }`}
-                   >
-                      <div className="relative z-10 flex items-center">
-                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-5 text-sm font-black border-2 ${answers[currentQuestion] === idx ? 'bg-white/20 border-white/40' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-700 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 group-hover:border-primary-100'}`}>
-                            {String.fromCharCode(65 + idx)}
-                         </div>
-                         {option}
-                      </div>
-                      {answers[currentQuestion] === idx && (
-                        <motion.div layoutId="selection" className="absolute inset-0 bg-primary-600 -z-0"></motion.div>
-                      )}
-                   </button>
-                ))}
-             </div>
-          </motion.div>
-       </main>
+                  {assignment.resourceType === 'pdf' && assignment.resourceFile && (
+                    <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900">
+                       <iframe src={`${API_URL.replace('/api', '')}/${assignment.resourceFile}`} className="w-full h-full" title="PDF Preview" />
+                    </div>
+                  )}
+
+                  {assignment.resourceType === 'url' && (
+                    <div className="p-8 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
+                       <PlayCircle className="w-16 h-16 text-primary-500 mx-auto mb-4" />
+                       <p className="text-slate-700 dark:text-slate-200 font-bold text-lg mb-6 truncate max-w-md mx-auto">{assignment.resourceUrl}</p>
+                       <a href={assignment.resourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center bg-primary-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary-200">
+                         Open External Resource
+                       </a>
+                    </div>
+                  )}
+
+                  <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 font-medium leading-relaxed text-lg text-center">
+                    {assignment.description || "No further instructions provided by mentor."}
+                  </div>
+
+                  <div className="pt-8 border-t border-slate-100 dark:border-slate-700 flex justify-center">
+                    <button 
+                      onClick={handleSubmit}
+                      disabled={submitting}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-14 py-6 rounded-[2rem] transition-all flex items-center shadow-xl shadow-emerald-200 dark:shadow-emerald-900/30 text-sm uppercase tracking-widest active:scale-95"
+                    >
+                      {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <CheckCircle className="w-6 h-6 mr-3" />}
+                      Mark Lesson as Finished
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center space-x-4 mb-8">
+                    <div className="w-14 h-14 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner border-2 border-white dark:border-slate-800">
+                      {currentQuestion + 1}
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white leading-tight">{currentQ?.question}</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
+                    {currentQ?.options?.map((option: string, idx: number) => (
+                      <button
+                        key={idx}
+                        onClick={() => selectOption(idx)}
+                        className={`p-8 rounded-[2.5rem] text-left text-lg font-bold transition-all relative group overflow-hidden border-2 ${
+                          answers[currentQuestion] === idx 
+                            ? 'bg-primary-600 border-primary-600 text-white shadow-xl shadow-primary-200 dark:shadow-primary-900/30' 
+                            : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-800 text-slate-700 dark:text-slate-200 hover:shadow-lg'
+                        }`}
+                      >
+                          <div className="relative z-10 flex items-center">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-5 text-sm font-black border-2 ${answers[currentQuestion] === idx ? 'bg-white/20 border-white/40' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-700 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 group-hover:border-primary-100'}`}>
+                                {String.fromCharCode(65 + idx)}
+                            </div>
+                            {option}
+                          </div>
+                          {answers[currentQuestion] === idx && (
+                            <motion.div layoutId="selection" className="absolute inset-0 bg-primary-600 -z-0"></motion.div>
+                          )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+           </motion.div>
+        </main>
 
        {/* Footer Controls */}
        <footer className="bg-white dark:bg-slate-800 p-8 px-10 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center transition-all shadow-sm">

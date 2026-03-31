@@ -5,7 +5,30 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['student', 'mentor', 'ngo'], default: 'student' }
+  role: { type: String, enum: ['student', 'mentor', 'ngo'], default: 'student' },
+  
+  // Matching & Expertise
+  subjectsTaught: [{ type: String }], // For mentors
+  subjectsNeeded: [{ type: String }], // For students
+  spokenLanguages: [{ type: String }],
+  assignedMentorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  
+  // Rating & Progress
+  avgRating: { type: Number, default: 0 },
+  feedbackCount: { type: Number, default: 0 },
+  xp: { type: Number, default: 0 },
+  streak: { type: Number, default: 1 },
+  
+  // Progression (Student)
+  dailyGoals: [{
+    text: { type: String },
+    completed: { type: Boolean, default: false }
+  }],
+  xp: { type: Number, default: 0 },
+  
+  // Rating (Mentor)
+  avgRating: { type: Number, default: 0 },
+  feedbackCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 userSchema.pre('save', async function() {

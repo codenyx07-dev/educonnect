@@ -6,6 +6,10 @@ interface User {
   name: string;
   email: string;
   role: 'student' | 'mentor' | 'ngo';
+  assignedMentorId?: string;
+  subjectsTaught?: string[];
+  subjectsNeeded?: string[];
+  spokenLanguages?: string[];
 }
 
 interface AuthState {

@@ -99,7 +99,7 @@ function MentorChatContent() {
            </div>
            <div className="relative">
              <Search className="absolute left-4 top-3 w-4 h-4 text-slate-400" />
-             <input type="text" placeholder="Search direct message..." className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl p-2.5 pl-10 text-xs font-bold outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium text-slate-100" />
+             <input type="text" placeholder="Search direct message..." className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl p-2.5 pl-10 text-xs font-bold outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium text-slate-800 dark:text-white" />
            </div>
         </div>
 
@@ -203,7 +203,7 @@ function MentorChatContent() {
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                       placeholder="Type your message..." 
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 pr-12 focus:outline-none focus:ring-4 focus:ring-primary-500/10 font-medium transition-all text-slate-100" 
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 pr-12 focus:outline-none focus:ring-4 focus:ring-primary-500/10 font-medium transition-all text-slate-800 dark:text-white" 
                     />
                     <button onClick={handleSend} className="absolute right-3 top-3 p-2 bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-200 dark:shadow-primary-900/20 hover:scale-105 active:scale-95 transition-all">
                        <Send className="w-4 h-4" />
